@@ -1,6 +1,6 @@
 <div class="container">
   <h1>Employees</h1>
-
+  
   <table class="table">
     <thead>
       <tr>
@@ -8,22 +8,20 @@
         <th scope="col">Name</th>
         <th scope="col">Salary</th>
         <th scope="col">Position</th>
-        <th scope="col">Date Of Birth</th>
+        <th scope="col">Date of Birth</th>
         <th colspan="2" scope="col">Actions</th>
       </tr>
     </thead>
     <tbody>
       <% @employees.dig("data").each do |e| %>
-      <tr>
-        <th scope="row"><%= e.dig("id") %></th>
-        <td><%= e.dig("name") %></td>
-        <td><%= e.dig("salary") %></td>
-        <td><%= e.dig("position") %></td>
-        <td><%= e.dig("date_of_birth") %></td>
-        <td><%= link_to 'Edit', edit_employee_path(e["id"]) %> </td>
-        <td><%= link_to 'Show', employee_path(e["id"]) %> </td>
-  
-      </tr>
+        <tr>
+          <th scope="row"><%= e.dig("id") %></th>
+          <td><%= e.dig("name") %></td>
+          <td><%= e.dig("salary") %></td>
+          <td><%= e.dig("position") %></td>
+          <td><%= e.dig("date_of_birth") %></td>
+          <%= render 'employee_actions', employee: e %>
+        </tr>
       <% end %>
     </tbody>
   </table>

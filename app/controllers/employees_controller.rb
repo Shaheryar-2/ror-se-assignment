@@ -85,5 +85,5 @@ class EmployeesController < ApplicationController
       @employee = JSON.parse(response.body)
 
       redirect_to edit_employee_path(@employee.dig("id"))
-    end  
+    end
 end
