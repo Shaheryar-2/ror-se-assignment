@@ -1,89 +1,44 @@
-require 'net/http'
-require 'net/https'
-
 class EmployeesController < ApplicationController
   before_action :authenticate_user!
-  
-    def index
-      if params[:page].present?
-        uri = URI("https://dummy-employees-api-8bad748cda19.herokuapp.com/employees?page=#{params[:page]}")
-      else
-        uri = URI('https://dummy-employees-api-8bad748cda19.herokuapp.com/employees')
-      end
-      @response = Net::HTTP.get(uri)
-      @employees = JSON.parse(@response)
-    end
-  
-    def edit
-      uri = URI("https://dummy-employees-api-8bad748cda19.herokuapp.com/employees/#{params[:id]}")
-      @response = Net::HTTP.get(uri)
-      @employee = JSON.parse(@response)
-    end
+  include HandleServiceErrors
 
-    def show
-      uri = URI("https://dummy-employees-api-8bad748cda19.herokuapp.com/employees/#{params[:id]}")
-      @response = Net::HTTP.get(uri)
-      @employee = JSON.parse(@response)
-    end
+  def index
+    @employees = EmployeeService.get_employees(page: params[:page])
+    return handle_error('Unable to retrieve employee data. Please try again later.', root_path) if @employees.nil?
+  end
 
-    def create
-      uri = URI("https://dummy-employees-api-8bad748cda19.herokuapp.com/employees/#{params[:id]}")
+  def show
+    @employee = EmployeeService.get_employee(params[:id])
+    return handle_error('Unable to retrieve employee details. Please try again later.', employees_path) if @employee.nil?
+  end
 
+  def edit
+    @employee = EmployeeService.get_employee(params[:id])
+    return handle_error('Unable to retrieve employee details for editing. Please try again later.', employees_path) if @employee.nil?
+  end
 
-      http = Net::HTTP.new(uri.host, uri.port)
-
-      http.use_ssl = (uri.scheme == 'https')
-
-      request = Net::HTTP::Post.new(uri.path)
-
-      request['Content-Type'] = 'application/json'
-
-      body = {
-        "name": params[:name],
-        "position": params[:position],
-        "date_of_birth": params[:date_of_birth],
-        "salary": params[:salary]
-      }.to_json
-      request.body = body
-
-      response = http.request(request)
-
-      puts "Response Code: #{response.code}"
-      puts "Response Body: #{response.body}"
-
-      @employee = JSON.parse(response.body)
-
+  def create
+    employee_params = employee_params_from_request
+    @employee = EmployeeService.create_employee(employee_params)
+    if @employee.nil?
+      handle_error('Failed to create employee. Please try again later.', new_employee_path)
+    else
       redirect_to employee_path(@employee.dig("id"))
     end
-  
-    def update
+  end
 
-      uri = URI("https://dummy-employees-api-8bad748cda19.herokuapp.com/employees/#{params[:id]}")
-
-
-      http = Net::HTTP.new(uri.host, uri.port)
-
-      http.use_ssl = (uri.scheme == 'https')
-
-      request = Net::HTTP::Put.new(uri.path)
-
-      request['Content-Type'] = 'application/json'
-
-      body = {
-        "name": params[:name],
-        "position": params[:position],
-        "date_of_birth": params[:date_of_birth],
-        "salary": params[:salary]
-      }.to_json
-      request.body = body
-
-      response = http.request(request)
-
-      puts "Response Code: #{response.code}"
-      puts "Response Body: #{response.body}"
-
-      @employee = JSON.parse(response.body)
-
+  def update
+    employee_params = employee_params_from_request
+    @employee = EmployeeService.update_employee(params[:id], employee_params)
+    if @employee.nil?
+      handle_error('Failed to update employee. Please try again later.', edit_employee_path(params[:id]))
+    else
       redirect_to edit_employee_path(@employee.dig("id"))
-    end  
+    end
+  end
+
+  private
+    def employee_params_from_request
+      params.permit(:name, :position, :date_of_birth, :salary)
+    end
 end
