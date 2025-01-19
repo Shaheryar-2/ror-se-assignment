@@ -62,16 +62,35 @@ class BlogsController < ApplicationController
   end
 
   def import
+    # Assumption:: Threre are no validations required because there are no one written in models
     file = params[:attachment]
-    data = CSV.parse(file.to_io, headers: true, encoding: 'utf8')
-    # Start code to handle CSV data
-    ActiveRecord::Base.transaction do
-      data.each do |row|
-        current_user.blogs.create!(row.to_h)
+
+    # Validate file presence
+    if file.blank?
+      redirect_to blogs_path, alert: 'No file selected for import.'
+      return
+    end
+
+    blogs = []
+    batch_size = 5000
+
+    CSV.foreach(file.path, headers: true, encoding: 'utf8') do |row|
+      # Add each blog entry, merging in user_id
+      blogs << row.to_h.merge('user_id' => current_user.id)
+
+      # Perform bulk insert when batch size is reached
+      if blogs.size >= batch_size
+        Blog.insert_all(blogs)
+        blogs.clear
       end
     end
-    # End code to handle CSV data
-    redirect_to blogs_path
+
+    # Insert remaining records
+    Blog.insert_all(blogs) if blogs.any?
+
+    redirect_to blogs_path, notice: 'Blogs imported successfully.'
+  rescue => e
+    redirect_to blogs_path, alert: "Failed to import blogs: #{e.message}"
   end
 
   private
