@@ -3,6 +3,7 @@ class EmployeesController < ApplicationController
   include HandleServiceErrors
 
   def index
+    # Assumption:: The API for employees are not working so I am assuming my responses
     @employees = EmployeeService.get_employees(page: params[:page])
     return handle_error('Unable to retrieve employee data. Please try again later.', root_path) if @employees.nil?
   end
