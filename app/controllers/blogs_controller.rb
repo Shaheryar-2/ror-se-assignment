@@ -5,7 +5,6 @@ class BlogsController < ApplicationController
 
   # GET /blogs or /blogs.json
   def index
-    # @blogs = current_user.blogs
     @pagy, @blogs = pagy(current_user.blogs)
   end
 
